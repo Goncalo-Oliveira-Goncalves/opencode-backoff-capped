@@ -8,6 +8,7 @@ import { isRecord } from "@/util/record"
 export type Err = ReturnType<NamedError["toObject"]>
 
 export const GO_UPSELL_MESSAGE = "Free usage exceeded, subscribe to Go"
+export const RETRY_MAX_DELAY_HEADERS = 60_000 
 export const GO_UPSELL_URL = "https://opencode.ai/go"
 export type RetryReason = "free_tier_limit" | "account_rate_limit" | (string & {})
 
@@ -40,7 +41,7 @@ export function delay(attempt: number, error?: SessionV1.APIError) {
       if (retryAfterMs) {
         const parsedMs = Number.parseFloat(retryAfterMs)
         if (!Number.isNaN(parsedMs)) {
-          return cap(parsedMs)
+          return Math.min(cap(parsedMs), 60_000)
         }
       }
 
@@ -49,7 +50,7 @@ export function delay(attempt: number, error?: SessionV1.APIError) {
         const parsedSeconds = Number.parseFloat(retryAfter)
         if (!Number.isNaN(parsedSeconds)) {
           // convert seconds to milliseconds
-          return cap(Math.ceil(parsedSeconds * 1000))
+          return Math.min(cap(Math.ceil(parsedSeconds * 1000)), 60_000)
         }
         // Try parsing as HTTP date format
         const parsed = Date.parse(retryAfter) - Date.now()
